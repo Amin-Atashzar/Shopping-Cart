@@ -1,0 +1,83 @@
+* {
+  box-sizing: border-box;
+  font-family: sans-serif;
+}
+.container {
+  width: 80%;
+  margin: 0 auto;
+}
+
+.shadow {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+}
+.products {
+  width: 65%;
+  float: left;
+  padding-top: 20px;
+}
+
+figure {
+  background-color: #edecf1;
+  float: left;
+  margin: 0;
+  padding: 0;
+  width: 20%;
+  margin: 10px 20px 10px 0;
+  cursor: pointer;
+}
+
+figure img {
+  width: 100%;
+}
+
+figcaption {
+  padding: 10px;
+}
+
+figure p:last-child {
+  display: inline;
+}
+
+.factor {
+  position: relative;
+  width: 35%;
+  float: left;
+  height: 200px;
+  padding: 30px 0 0 20px;
+  text-align: center;
+  height: 450px;
+}
+
+table {
+  width: 90%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border: 1px solid black;
+  width: 25%;
+  height: 30px;
+}
+
+.total {
+  position: absolute;
+  bottom: 0;
+  font-size: 25px;
+}
+
+.stock {
+  float: left;
+  color: red;
+  font-size: 21px;
+  margin-top: 35px;
+}
+
+input[type="number"] {
+  width: 40px;
+}
+
+a {
+  text-decoration: none;
+  color: red;
+}
