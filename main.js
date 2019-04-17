@@ -31,131 +31,123 @@ const products = [
     inStock: 6
   }
 ];
-let total = 0;
+
+const inputChange = product => {
+  console.log(product);
+};
+
+const addToCart = (product, cart) => {
+  const productInCart = cart.find(item => item.id === product.id);
+  if (productInCart) {
+    productInCart.count++;
+  } else {
+    const cartItem = {
+      ...product,
+      count: 1
+    };
+
+    delete cartItem.inStock;
+
+    cart.push(cartItem);
+  }
+};
+
+const validateCart = (cart, products) =>
+  cart.reduce((acc, item) => {
+    if (item.count > products.find(p => p.id === item.id).inStock) {
+      acc = false;
+    }
+    return acc;
+  }, true);
+
+const getTotal = cart =>
+  cart.reduce(
+    (preValue, curValue) => preValue + curValue.price * curValue.count,
+    0
+  );
+
+function print() {
+  const table = document.getElementById("tbl");
+  document.getElementById("sum").innerHTML = getTotal(cart);
+
+  for (let i = table.childNodes.length - 1; i > 1; i--) {
+    table.removeChild(table.childNodes[i]);
+  }
+  cart.forEach(element => {
+    let tr = document.createElement("tr");
+
+    tr.addEventListener("mouseover", function() {
+      this.style.backgroundColor = "yellow";
+    });
+
+    tr.addEventListener("mouseout", function() {
+      this.style.backgroundColor = "white";
+    });
+
+    let titleCell = document.createElement("td");
+    const titleNode = document.createTextNode(element.title);
+    titleCell.appendChild(titleNode);
+
+    let priceCell = document.createElement("td");
+    const priceNode = document.createTextNode(element.price * element.count);
+    priceCell.appendChild(priceNode);
+
+    let countCell = document.createElement("td");
+    const countNumber = document.createElement("input");
+    countNumber.type = "number";
+    countNumber.value = element.count;
+    countNumber.onchange = function() {
+      let curValue = countNumber.value;
+      let product = products.find(
+        item =>
+          item.title === this.parentNode.parentNode.childNodes[0].innerHTML
+      );
+      if (curValue < 0) {
+        countNumber.value = 0;
+        alert("invalid action!!");
+      } else {
+        const draftCart = cart.map(item => ({ ...item }));
+        draftCart.find(item => item.id === product.id).count =
+          countNumber.value;
+        if (validateCart(draftCart, products)) {
+          cart = draftCart;
+          print();
+        } else {
+          countNumber.value = countNumber.value - 1;
+          alert("invalid action");
+        }
+      }
+    };
+    countCell.appendChild(countNumber);
+
+    let deleteCell = document.createElement("td");
+    const deleteLink = document.createElement("a");
+    deleteLink.innerHTML = "Delete";
+    deleteLink.href = "#";
+    deleteLink.onclick = () => {
+      cart = cart.filter(item => item.id != element.id);
+      print();
+    };
+    deleteCell.appendChild(deleteLink);
+
+    tr.appendChild(titleCell);
+    tr.appendChild(priceCell);
+    tr.appendChild(countCell);
+    tr.appendChild(deleteCell);
+
+    table.appendChild(tr);
+  });
+}
 
 const buy = elem => {
-  let table = document.getElementById("tbl");
-  const id = elem.dataset["productId"]; //instead elem.attributes[2].value
+  const id = Number(elem.dataset["productId"]); //instead elem.attributes[2].value
+  const draftCart = cart.map(item => ({ ...item }));
 
-  const addNewToCart = () => {
-    const product = products
-      .map(item => ({ ...item, count: 1 }))
-      .find(item => item.id == id);
-    cart.push(product);
-    cart.find(item => item.id == id).inStock--;
-  };
-
-  const handleIncrement = () => {
-    if (checkStock()) {
-      cart.find(item => item.id == id).count++;
-      cart.find(item => item.id == id).inStock--;
-      print();
-    } else {
-      alert(products.find(item => item.id == id).title + " Not in stock");
-    }
-  };
-
-  const handleDecrement = () => {
-    if (
-      cart.find(item => item.id == id).inStock <
-      products.find(item => item.id == id).inStock
-    ) {
-      cart.find(item => item.id == id).count--;
-      cart.find(item => item.id == id).inStock++;
-      print();
-    }
-  };
-
-  const checkStock = () => {
-    if (cart.find(item => item.id == id).inStock > 0) {
-      return true;
-    }
-  };
-
-  //check for new product
-  let newProduct = cart.find(item => item.id == id);
-  if (!newProduct) {
-    addNewToCart();
+  addToCart(products.find(p => p.id === id), draftCart);
+  if (validateCart(draftCart, products)) {
+    cart = draftCart;
     print();
   } else {
-    handleIncrement();
-  }
-
-  //add cart items to table
-  function print() {
-    //execute total price
-    const executeTotal = () => {
-      let total = cart.reduce(
-        (preValue, curValue) => preValue + curValue.price * curValue.count,
-        0
-      );
-      document.getElementById("sum").innerHTML = total;
-    };
-    executeTotal();
-
-    for (let i = table.childNodes.length - 1; i > 1; i--) {
-      table.removeChild(table.childNodes[i]);
-    }
-    cart.forEach(element => {
-      let tr = document.createElement("tr");
-
-      tr.addEventListener("mouseover", function() {
-        this.style.backgroundColor = "yellow";
-      });
-
-      tr.addEventListener("mouseout", function() {
-        this.style.backgroundColor = "white";
-      });
-
-      let titleCell = document.createElement("td");
-      const titleNode = document.createTextNode(element.title);
-      titleCell.appendChild(titleNode);
-
-      let priceCell = document.createElement("td");
-      const priceNode = document.createTextNode(element.price * element.count);
-      priceCell.appendChild(priceNode);
-
-      let countCell = document.createElement("td");
-      const countNumber = document.createElement("input");
-      countNumber.type = "number";
-      countNumber.value = element.count;
-      let preValue = countNumber.value;
-      countNumber.onchange = function() {
-        let curValue = countNumber.value;
-        console.log(element.inStock);
-        if (curValue > preValue) {
-          if (element.inStock > 0) {
-            handleIncrement();
-          } else {
-            countNumber.value = preValue;
-            alert(element.title + " not in stock");
-          }
-        } else {
-          if (countNumber.value >= 0) {
-            handleDecrement();
-          } else {
-            countNumber.value = preValue;
-          }
-        }
-      };
-      countCell.appendChild(countNumber);
-
-      let deleteCell = document.createElement("td");
-      const deleteLink = document.createElement("a");
-      deleteLink.innerHTML = "Delete";
-      deleteLink.href = "#";
-      deleteLink.onclick = () => {
-        cart = cart.filter(item => item.id != element.id);
-        print();
-      };
-      deleteCell.appendChild(deleteLink);
-
-      tr.appendChild(titleCell);
-      tr.appendChild(priceCell);
-      tr.appendChild(countCell);
-      tr.appendChild(deleteCell);
-
-      table.appendChild(tr);
-    });
+    alert("action not valid");
   }
 };
