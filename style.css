@@ -34,10 +34,6 @@ figcaption {
   padding: 10px;
 }
 
-figure p:last-child {
-  display: inline;
-}
-
 .factor {
   position: relative;
   width: 35%;
@@ -80,4 +76,10 @@ input[type="number"] {
 a {
   text-decoration: none;
   color: red;
+}
+p {
+  margin: 5px 0;
+}
+.red {
+  color: #d44646;
 }

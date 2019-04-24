@@ -31,9 +31,27 @@ const products = [
     inStock: 6
   }
 ];
+window.onload = () => {
+  showProducts();
+};
 
-const inputChange = product => {
-  console.log(product);
+const showProducts = () => {
+  products.forEach(product => {
+    const element = `<figure class="shadow" onclick="buy(this)" data-product-id="${
+      product.id
+    }">
+      <img src="g.jpg" alt="Picture not available!!" />
+      <figcaption>
+        <p>${product.title}</p>
+        
+        <p><span>Price :</span>${product.price}</p>
+        
+        <p><span>inStock :</span>${product.inStock}</p>
+        <p class="red" id="${product.id}"></p>
+      </figcaption>
+    </figure>`;
+    document.getElementById("root").innerHTML += element;
+  });
 };
 
 const addToCart = (product, cart) => {
@@ -45,11 +63,10 @@ const addToCart = (product, cart) => {
       ...product,
       count: 1
     };
-
     delete cartItem.inStock;
-
     cart.push(cartItem);
   }
+  checkStock(product, cart);
 };
 
 const validateCart = (cart, products) =>
@@ -66,7 +83,44 @@ const getTotal = cart =>
     0
   );
 
-function print() {
+const handleDelete = id => {
+  cart = cart.filter(item => item.id != id);
+  console.log("a");
+  print();
+  document.getElementById(`${id}`).innerHTML = "";
+};
+
+const handleInput = (curValue, countNumber, product) => {
+  if (curValue < 0) {
+    countNumber.value = 0;
+    alert("invalid action!!");
+  } else {
+    const draftCart = cart.map(item => ({ ...item }));
+    draftCart.find(item => item.id === product.id).count = countNumber.value;
+    if (validateCart(draftCart, products)) {
+      cart = draftCart;
+      print();
+    } else {
+      countNumber.value = countNumber.value - 1;
+      alert("invalid action");
+    }
+  }
+  checkStock(product, cart);
+};
+
+const checkStock = (product, cart) => {
+  if (
+    Number(cart.find(c => c.id === product.id).count) + 1 ===
+    product.inStock
+  ) {
+    console.log("a");
+    document.getElementById(`${product.id}`).innerHTML = "inStock is 1";
+  } else {
+    document.getElementById(`${product.id}`).innerHTML = "";
+  }
+};
+
+const print = () => {
   const table = document.getElementById("tbl");
   document.getElementById("sum").innerHTML = getTotal(cart);
 
@@ -75,14 +129,6 @@ function print() {
   }
   cart.forEach(element => {
     let tr = document.createElement("tr");
-
-    tr.addEventListener("mouseover", function() {
-      this.style.backgroundColor = "yellow";
-    });
-
-    tr.addEventListener("mouseout", function() {
-      this.style.backgroundColor = "white";
-    });
 
     let titleCell = document.createElement("td");
     const titleNode = document.createTextNode(element.title);
@@ -102,22 +148,9 @@ function print() {
         item =>
           item.title === this.parentNode.parentNode.childNodes[0].innerHTML
       );
-      if (curValue < 0) {
-        countNumber.value = 0;
-        alert("invalid action!!");
-      } else {
-        const draftCart = cart.map(item => ({ ...item }));
-        draftCart.find(item => item.id === product.id).count =
-          countNumber.value;
-        if (validateCart(draftCart, products)) {
-          cart = draftCart;
-          print();
-        } else {
-          countNumber.value = countNumber.value - 1;
-          alert("invalid action");
-        }
-      }
+      handleInput(curValue, countNumber, product);
     };
+
     countCell.appendChild(countNumber);
 
     let deleteCell = document.createElement("td");
@@ -125,8 +158,7 @@ function print() {
     deleteLink.innerHTML = "Delete";
     deleteLink.href = "#";
     deleteLink.onclick = () => {
-      cart = cart.filter(item => item.id != element.id);
-      print();
+      handleDelete(element.id);
     };
     deleteCell.appendChild(deleteLink);
 
@@ -137,12 +169,11 @@ function print() {
 
     table.appendChild(tr);
   });
-}
+};
 
 const buy = elem => {
   const id = Number(elem.dataset["productId"]); //instead elem.attributes[2].value
   const draftCart = cart.map(item => ({ ...item }));
-
   addToCart(products.find(p => p.id === id), draftCart);
   if (validateCart(draftCart, products)) {
     cart = draftCart;
