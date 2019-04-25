@@ -31,27 +31,36 @@ const products = [
     inStock: 6
   }
 ];
-window.onload = () => {
-  showProducts();
-};
 
-const showProducts = () => {
-  products.forEach(product => {
-    const element = `<figure class="shadow" onclick="buy(this)" data-product-id="${
-      product.id
-    }">
+const printProducts = () => {
+  const root = document.getElementById("root");
+  root.innerHTML = "";
+  products
+    .map(product => ({
+      ...product,
+      inStock:
+        product.inStock -
+        cart.filter(i => i.id === product.id).reduce((c, item) => item.count, 0)
+    }))
+    .filter(item => item.inStock > 0)
+    .forEach(product => {
+      const element = `
+      <figure class='shadow' onclick="buy(this)" data-product-id='${
+        product.id
+      }'>
       <img src="g.jpg" alt="Picture not available!!" />
       <figcaption>
-        <p>${product.title}</p>
-        
-        <p><span>Price :</span>${product.price}</p>
-        
-        <p><span>inStock :</span>${product.inStock}</p>
-        <p class="red" id="${product.id}"></p>
+          <p>${product.title}</p>
+          
+          <p><span>Price :</span>${product.price}</p>
+          
+          <p><span>inStock :</span>${product.inStock}</p>
+          <p class="red" id="${product.id}"></p>
       </figcaption>
-    </figure>`;
-    document.getElementById("root").innerHTML += element;
-  });
+      </figure>
+      `;
+      root.innerHTML += element;
+    });
 };
 
 const addToCart = (product, cart) => {
@@ -66,7 +75,6 @@ const addToCart = (product, cart) => {
     delete cartItem.inStock;
     cart.push(cartItem);
   }
-  checkStock(product, cart);
 };
 
 const validateCart = (cart, products) =>
@@ -105,68 +113,25 @@ const handleInput = (curValue, countNumber, product) => {
       alert("invalid action");
     }
   }
-  checkStock(product, cart);
 };
 
-const checkStock = (product, cart) => {
-  if (
-    Number(cart.find(c => c.id === product.id).count) + 1 ===
-    product.inStock
-  ) {
-    console.log("a");
-    document.getElementById(`${product.id}`).innerHTML = "inStock is 1";
-  } else {
-    document.getElementById(`${product.id}`).innerHTML = "";
-  }
-};
-
-const print = () => {
+const printInvoice = () => {
   const table = document.getElementById("tbl");
   document.getElementById("sum").innerHTML = getTotal(cart);
 
   for (let i = table.childNodes.length - 1; i > 1; i--) {
     table.removeChild(table.childNodes[i]);
   }
-  cart.forEach(element => {
+  cart.forEach(item => {
     let tr = document.createElement("tr");
-
-    let titleCell = document.createElement("td");
-    const titleNode = document.createTextNode(element.title);
-    titleCell.appendChild(titleNode);
-
-    let priceCell = document.createElement("td");
-    const priceNode = document.createTextNode(element.price * element.count);
-    priceCell.appendChild(priceNode);
-
-    let countCell = document.createElement("td");
-    const countNumber = document.createElement("input");
-    countNumber.type = "number";
-    countNumber.value = element.count;
-    countNumber.onchange = function() {
-      let curValue = countNumber.value;
-      let product = products.find(
-        item =>
-          item.title === this.parentNode.parentNode.childNodes[0].innerHTML
-      );
-      handleInput(curValue, countNumber, product);
-    };
-
-    countCell.appendChild(countNumber);
-
-    let deleteCell = document.createElement("td");
-    const deleteLink = document.createElement("a");
-    deleteLink.innerHTML = "Delete";
-    deleteLink.href = "#";
-    deleteLink.onclick = () => {
-      handleDelete(element.id);
-    };
-    deleteCell.appendChild(deleteLink);
-
-    tr.appendChild(titleCell);
-    tr.appendChild(priceCell);
-    tr.appendChild(countCell);
-    tr.appendChild(deleteCell);
-
+    tr.innerHTML = `
+    <td>${item.title}</td>
+    <td>${item.price}</td>
+    <td><input type='number' value='${
+      item.count
+    }' class='count' data-product-id = "${item.id}"/></td>
+    <td><a href="#"  class="delete" data-product-id="${item.id}">Delete</a></td>
+    `;
     table.appendChild(tr);
   });
 };
@@ -177,8 +142,54 @@ const buy = elem => {
   addToCart(products.find(p => p.id === id), draftCart);
   if (validateCart(draftCart, products)) {
     cart = draftCart;
-    print();
+    printInvoice();
+    printProducts();
   } else {
     alert("action not valid");
   }
 };
+
+const listenDelete = () => {
+  document.addEventListener("click", e => {
+    const element = e.target;
+    if (element && element.classList.contains("delete")) {
+      cart = cart.filter(
+        item => item.id !== Number(element.dataset["productId"])
+      );
+      printInvoice();
+      printProducts();
+    }
+  });
+};
+
+const updateCount = (id, cart, value) => {
+  if (value > 0) {
+    const productInCart = cart.find(item => item.id === id);
+    productInCart.count = value;
+  } else {
+    cart.splice(cart.findIndex(item => item.id === id), 1);
+  }
+};
+
+const listenInput = () => {
+  document.addEventListener("change", e => {
+    const element = e.target;
+    if (element && element.classList.contains("count")) {
+      const id = Number(element.dataset["productId"]);
+      const draftCart = cart.map(item => ({ ...item }));
+      const value = element.value;
+      updateCount(id, draftCart, value);
+      if (validateCart(draftCart, products)) {
+        cart = draftCart;
+        printProducts();
+      } else {
+        alert("product out of stock!");
+      }
+      printInvoice();
+    }
+  });
+};
+
+printProducts();
+listenDelete();
+listenInput();
